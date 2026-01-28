@@ -1,0 +1,5 @@
+streamlit
+feedparser
+vaderSentiment
+deep_translator
+python-dateutil
