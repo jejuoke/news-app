@@ -6,51 +6,78 @@ from dateutil import parser
 from datetime import datetime, timedelta
 import urllib.parse
 
-# 1. 페이지 설정 및 디자인 커스텀
+# 1. 페이지 설정 및 모바일 최적화 디자인
 st.set_page_config(page_title="News Insights", layout="wide")
 
-# 모바일에서 더 예쁘게 보이도록 CSS 스타일 추가
+# CSS 수정: 글자 크기를 줄이고 한 줄 제한(ellipsis) 옵션 추가
 st.markdown("""
     <style>
-    .main { background-color: #f8f9fa; }
-    .stButton>button { width: 100%; border-radius: 10px; height: 3em; background-color: #0078D4; color: white; }
-    .news-card { background-color: white; padding: 20px; border-radius: 15px; box-shadow: 2px 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    .kst-time { color: #666; font-size: 0.85em; }
-    .sentiment-tag { font-weight: bold; font-size: 0.9em; padding: 2px 8px; border-radius: 5px; }
+    /* 전체 배경색 */
+    .main { background-color: #f5f7f9; }
+    
+    /* 검색창과 버튼 가로 정렬 및 크기 조절 */
+    .stButton>button { width: 100%; border-radius: 8px; background-color: #0078D4; color: white; height: 3.2em; font-weight: bold; }
+    
+    /* 뉴스 카드 디자인 */
+    .news-card { 
+        background-color: white; 
+        padding: 15px; 
+        border-radius: 12px; 
+        box-shadow: 0px 2px 5px rgba(0,0,0,0.05); 
+        margin-bottom: 12px; 
+        border: 1px solid #eee;
+    }
+    
+    /* 제목 스타일: 모바일에 맞춰 크기 줄임 및 줄간격 조절 */
+    .news-title { 
+        font-size: 1rem !important; 
+        font-weight: 600; 
+        line-height: 1.3;
+        margin-bottom: 8px;
+        display: block;
+    }
+    .news-title a { text-decoration: none; color: #1a1a1a; }
+    
+    /* 시간 및 태그 스타일 */
+    .kst-time { color: #888; font-size: 0.75rem; margin-top: 5px; }
+    .sentiment-tag { 
+        font-size: 0.7rem; 
+        padding: 2px 6px; 
+        border-radius: 4px; 
+        font-weight: bold; 
+        margin-bottom: 8px;
+        display: inline-block;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. 분석기 로드
 @st.cache_resource
 def load_tools():
     return SentimentIntensityAnalyzer(), GoogleTranslator(source='ko', target='en')
 
 analyzer, translator = load_tools()
 
-# 3. 헤더 섹션
+# 헤더
 st.title("🚀 실시간 뉴스 분석")
-st.write("최신 동향을 한국 시간(KST)으로 가장 빠르게 분석합니다.")
 
-# 4. [핵심] 검색창을 사이드바가 아닌 메인 화면 상단으로 배치
+# 검색창 영역 (모바일에서 한 줄로 보이도록 배치)
 col1, col2 = st.columns([3, 1])
 with col1:
-    query = st.text_input("", value="원전", placeholder="키워드를 입력하세요 (예: 원전, 삼성전자)")
+    query = st.text_input("", value="원전", placeholder="키워드 입력", label_visibility="collapsed")
 with col2:
-    st.write(" ") # 간격 맞추기용
-    search_btn = st.button("분석 실행")
+    search_btn = st.button("검색")
 
-# 5. 분석 로직
-if search_btn or query: # 버튼을 누르거나 키워드만 입력해도 바로 작동
+if search_btn or query:
     encoded = urllib.parse.quote(query)
     url = f"https://news.google.com/rss/search?q={encoded}&hl=ko&gl=KR&ceid=KR:ko"
     
     feed = feedparser.parse(url)
     now_pc = datetime.now()
     
-    st.markdown(f"#### 🔍 '{query}' 검색 결과")
+    st.markdown(f"##### 🔍 '{query}' 결과")
     
     if not feed.entries:
-        st.error("검색 결과가 없습니다.")
+        st.error("결과가 없습니다.")
     else:
         analyzed_list = []
         for e in feed.entries:
@@ -66,22 +93,20 @@ if search_btn or query: # 버튼을 누르거나 키워드만 입력해도 바�
                 score = analyzer.polarity_scores(en_title)['compound']
             except: score = 0
             
-            # 호재/악재 색상 설정
             if score >= 0.05:
-                tag, color = "📈 호재", "#e1f5fe" # 연파랑
-                t_color = "#01579b"
+                tag, bg, txt = "📈 호재", "#e1f5fe", "#01579b"
             elif score <= -0.05:
-                tag, color = "📉 악재", "#ffebee" # 연빨강
-                t_color = "#c62828"
+                tag, bg, txt = "📉 악재", "#ffebee", "#c62828"
             else:
-                tag, color = "😐 중립", "#f5f5f5"
-                t_color = "#424242"
+                tag, bg, txt = "😐 중립", "#f5f5f5", "#424242"
             
-            # 디자인된 카드 출력
+            # 카드 출력 (글자 크기 및 간격 최적화)
             st.markdown(f"""
                 <div class="news-card">
-                    <span style="background-color: {color}; color: {t_color}; padding: 3px 8px; border-radius: 5px; font-weight: bold;">{tag}</span>
-                    <h3 style="margin-top: 10px; font-size: 1.1em;"><a href="{item['link']}" target="_blank" style="text-decoration: none; color: #1a1a1a;">{item['title']}</a></h3>
-                    <p class="kst-time">⏰ {item['kst_dt'].strftime('%Y-%m-%d %H:%M')} (KST)</p>
+                    <span class="sentiment-tag" style="background-color: {bg}; color: {txt};">{tag}</span>
+                    <span class="news-title">
+                        <a href="{item['link']}" target="_blank">{item['title']}</a>
+                    </span>
+                    <div class="kst-time">⏰ {item['kst_dt'].strftime('%m-%d %H:%M')}</div>
                 </div>
                 """, unsafe_allow_html=True)
