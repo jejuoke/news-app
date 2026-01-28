@@ -6,46 +6,55 @@ from dateutil import parser
 from datetime import datetime, timedelta
 import urllib.parse
 
-# 1. 페이지 설정 및 모바일 최적화 디자인
+# 1. 페이지 설정 및 디자인 최적화
 st.set_page_config(page_title="News Insights", layout="wide")
 
-# CSS 수정: 글자 크기를 줄이고 한 줄 제한(ellipsis) 옵션 추가
 st.markdown("""
     <style>
-    /* 전체 배경색 */
+    /* 전체 배경 및 상단 여백 압축 */
     .main { background-color: #f5f7f9; }
+    .block-container { padding-top: 2rem !important; padding-bottom: 0rem !important; }
     
-    /* 검색창과 버튼 가로 정렬 및 크기 조절 */
-    .stButton>button { width: 100%; border-radius: 8px; background-color: #0078D4; color: white; height: 3.2em; font-weight: bold; }
+    /* 대제목 스타일 수정 (크기 축소) */
+    .main-title { 
+        font-size: 1.4rem !important; 
+        font-weight: 800; 
+        color: #1a1a1a; 
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.05rem;
+    }
     
+    /* 검색창과 버튼 디자인 */
+    .stButton>button { width: 100%; border-radius: 8px; background-color: #0078D4; color: white; height: 3em; font-weight: bold; border: none; }
+    .stTextInput>div>div>input { border-radius: 8px !important; }
+
     /* 뉴스 카드 디자인 */
     .news-card { 
         background-color: white; 
-        padding: 15px; 
-        border-radius: 12px; 
-        box-shadow: 0px 2px 5px rgba(0,0,0,0.05); 
-        margin-bottom: 12px; 
+        padding: 12px 15px; 
+        border-radius: 10px; 
+        box-shadow: 0px 1px 3px rgba(0,0,0,0.05); 
+        margin-bottom: 10px; 
         border: 1px solid #eee;
     }
     
-    /* 제목 스타일: 모바일에 맞춰 크기 줄임 및 줄간격 조절 */
+    /* 뉴스 제목 스타일 (한 층 더 최적화) */
     .news-title { 
-        font-size: 1rem !important; 
+        font-size: 0.95rem !important; 
         font-weight: 600; 
-        line-height: 1.3;
-        margin-bottom: 8px;
+        line-height: 1.4;
+        margin-bottom: 5px;
         display: block;
     }
     .news-title a { text-decoration: none; color: #1a1a1a; }
     
-    /* 시간 및 태그 스타일 */
-    .kst-time { color: #888; font-size: 0.75rem; margin-top: 5px; }
+    .kst-time { color: #999; font-size: 0.7rem; }
     .sentiment-tag { 
-        font-size: 0.7rem; 
-        padding: 2px 6px; 
+        font-size: 0.65rem; 
+        padding: 1px 5px; 
         border-radius: 4px; 
         font-weight: bold; 
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         display: inline-block;
     }
     </style>
@@ -57,10 +66,10 @@ def load_tools():
 
 analyzer, translator = load_tools()
 
-# 헤더
-st.title("🚀 실시간 뉴스 분석")
+# 수정된 대제목 (HTML로 직접 제어)
+st.markdown('<div class="main-title">🚀 실시간 뉴스 분석</div>', unsafe_allow_html=True)
 
-# 검색창 영역 (모바일에서 한 줄로 보이도록 배치)
+# 검색 영역
 col1, col2 = st.columns([3, 1])
 with col1:
     query = st.text_input("", value="원전", placeholder="키워드 입력", label_visibility="collapsed")
@@ -73,8 +82,6 @@ if search_btn or query:
     
     feed = feedparser.parse(url)
     now_pc = datetime.now()
-    
-    st.markdown(f"##### 🔍 '{query}' 결과")
     
     if not feed.entries:
         st.error("결과가 없습니다.")
@@ -100,7 +107,6 @@ if search_btn or query:
             else:
                 tag, bg, txt = "😐 중립", "#f5f5f5", "#424242"
             
-            # 카드 출력 (글자 크기 및 간격 최적화)
             st.markdown(f"""
                 <div class="news-card">
                     <span class="sentiment-tag" style="background-color: {bg}; color: {txt};">{tag}</span>
