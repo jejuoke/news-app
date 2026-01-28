@@ -11,17 +11,25 @@ st.set_page_config(page_title="News Insights", layout="wide")
 
 st.markdown("""
     <style>
-    /* 전체 배경 및 상단 여백 압축 */
+    /* 전체 배경색 */
     .main { background-color: #f5f7f9; }
-    .block-container { padding-top: 2rem !important; padding-bottom: 0rem !important; }
     
-    /* 대제목 스타일 수정 (크기 축소) */
+    /* 상단 여백 조절: 너무 붙지 않게 3rem으로 조정 */
+    .block-container { 
+        padding-top: 3.5rem !important; 
+        padding-bottom: 1rem !important; 
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    /* 대제목 스타일: 잘리지 않도록 여백 확보 */
     .main-title { 
         font-size: 1.4rem !important; 
         font-weight: 800; 
         color: #1a1a1a; 
-        margin-bottom: 0.5rem;
+        margin-bottom: 1.2rem;
         letter-spacing: -0.05rem;
+        line-height: 1.2;
     }
     
     /* 검색창과 버튼 디자인 */
@@ -36,26 +44,27 @@ st.markdown("""
         box-shadow: 0px 1px 3px rgba(0,0,0,0.05); 
         margin-bottom: 10px; 
         border: 1px solid #eee;
+        display: flex;
+        flex-direction: column;
     }
     
-    /* 뉴스 제목 스타일 (한 층 더 최적화) */
+    /* 뉴스 제목 스타일 */
     .news-title { 
         font-size: 0.95rem !important; 
         font-weight: 600; 
         line-height: 1.4;
         margin-bottom: 5px;
-        display: block;
     }
     .news-title a { text-decoration: none; color: #1a1a1a; }
     
-    .kst-time { color: #999; font-size: 0.7rem; }
+    .kst-time { color: #999; font-size: 0.7rem; margin-top: 2px; }
     .sentiment-tag { 
         font-size: 0.65rem; 
-        padding: 1px 5px; 
+        padding: 2px 6px; 
         border-radius: 4px; 
         font-weight: bold; 
         margin-bottom: 6px;
-        display: inline-block;
+        width: fit-content;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -66,13 +75,13 @@ def load_tools():
 
 analyzer, translator = load_tools()
 
-# 수정된 대제목 (HTML로 직접 제어)
+# 대제목 출력
 st.markdown('<div class="main-title">🚀 실시간 뉴스 분석</div>', unsafe_allow_html=True)
 
-# 검색 영역
+# 검색 영역 (레이아웃 최적화)
 col1, col2 = st.columns([3, 1])
 with col1:
-    query = st.text_input("", value="원전", placeholder="키워드 입력", label_visibility="collapsed")
+    query = st.text_input("검색어", value="원전", placeholder="키워드 입력", label_visibility="collapsed")
 with col2:
     search_btn = st.button("검색")
 
@@ -81,7 +90,6 @@ if search_btn or query:
     url = f"https://news.google.com/rss/search?q={encoded}&hl=ko&gl=KR&ceid=KR:ko"
     
     feed = feedparser.parse(url)
-    now_pc = datetime.now()
     
     if not feed.entries:
         st.error("결과가 없습니다.")
@@ -109,10 +117,10 @@ if search_btn or query:
             
             st.markdown(f"""
                 <div class="news-card">
-                    <span class="sentiment-tag" style="background-color: {bg}; color: {txt};">{tag}</span>
-                    <span class="news-title">
+                    <div class="sentiment-tag" style="background-color: {bg}; color: {txt};">{tag}</div>
+                    <div class="news-title">
                         <a href="{item['link']}" target="_blank">{item['title']}</a>
-                    </span>
+                    </div>
                     <div class="kst-time">⏰ {item['kst_dt'].strftime('%m-%d %H:%M')}</div>
                 </div>
                 """, unsafe_allow_html=True)
